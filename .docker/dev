@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+_usage() {
+  echo "running the server"
+  echo "    up        start the server in development mode"
+  echo ""
+  echo "testing code"
+  echo "    test      run tests, accepts test names as arguments"
+  echo ""
+  echo "installing Python requirements"
+  echo "    pipi      without argument: installs packages defined in requirements.txt and requirements-local.txt"
+  echo "              with argument:    installs given requirement"
+  echo ""
+  echo "tools"
+  echo "    sca     run ruff and mypy"
+  echo "    format  run black"
+  echo ""
+  echo "making migrations"
+  echo "    makemigrations      create new migrations"
+  echo ""
+  echo "migrate"
+  echo "    migrate      run pending migrations"
+  echo ""
+  exit 1
+}
+
+# show usage if no argument is given
+arg=${1:-}
+shift || _usage
+
+route=${1:-}
+
+case ${arg} in
+up|run|server|runserver)
+  uvicorn src.app:app --reload --port 8000 --host 0.0.0.0
+;;
+migrate)
+  alembic upgrade head
+;;
+makemigrations|makemigration|makemig|mm)
+  alembic revision --autogenerate -m "$@"
+;;
+test)
+  pytest tests/"$@"
+;;
+sca)
+  ruff check --fix . && mypy ./src ./tests
+;;
+format)
+  black ./src ./tests
+;;
+pipi)
+  if [ $# -gt 0 ]; then
+    pip install --no-warn-script-location --disable-pip-version-check --no-cache-dir --upgrade "$@"
+  else
+    pip install --no-warn-script-location --disable-pip-version-check --no-cache-dir --upgrade -r /app/requirements.txt -r /app/requirements-dev.txt
+  fi
+;;
+*)
+  _usage
+;;
+esac

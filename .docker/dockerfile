@@ -1,0 +1,36 @@
+FROM python:3.10 as python-base
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# install Python requirements
+COPY requirements.txt /tmp/requirements.txt
+COPY requirements-dev.txt /tmp/requirements-dev.txt
+
+COPY .docker/dev /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/dev && \
+    dev pipi pip && \
+    dev pipi -r /tmp/requirements-dev.txt && \
+    # clean up Python modules
+    find /usr/local/ \
+    \( -type d -a -name test -o -name tests \) \
+    -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
+    -exec rm -rf '{}' \;
+
+
+FROM python-base
+COPY --from=python-base /usr/local/ /usr/local/
+WORKDIR /app
+ENV PYTHONPATH /app:${PYTHONPATH}
+
+EXPOSE 8000
+
+COPY .docker/docker-entrypoint.sh /
+
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT [ "/docker-entrypoint.sh" ]

@@ -1,0 +1,52 @@
+version: "3.8"
+services:
+  api:
+    container_name: muoh
+    build:
+      context: ../
+      dockerfile: .docker/dockerfile
+    depends_on:
+      - muoh-db
+      - mongodb
+    environment:
+      COLLECTIONS_DATABASE_URL: "postgresql://postgres:postgres@muoh-db:5432/muoh"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../alembic:/app/alembic
+      - ../alembic.ini:/app/alembic.ini
+      - ../src:/app/src
+      - ../tests:/app/tests
+      - ../pyproject.toml:/app/pyproject.toml
+      - /app/.venv/
+      - /app/.vscode/
+      - /app/.git/
+    restart: unless-stopped
+    networks:
+      - api-network
+    command: shell
+  muoh-db:
+    image: "postgres:13.7"
+    environment:
+      - POSTGRES_DB=muoh
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5435:5432"
+    networks:
+      - api-network
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  mongodb:
+    image: "mongo:latest"
+    ports:
+      - "27017:27017"
+    networks:
+      - api-network
+    volumes:
+      - mongo-data:/data/db
+volumes:
+  db-data:
+  mongo-data:
+networks:
+  api-network:
