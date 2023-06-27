@@ -7,6 +7,7 @@ class Property(BaseModel):
     id: int | ObjectIdField = Field(alias="_id")
     name: str
     image: str | None
+    address: str
 
     class Config:
         orm_mode = True
@@ -16,4 +17,5 @@ class Property(BaseModel):
 
 class PropertyInput(BaseModel):
     name: str = Field(min_length=3, max_length=5)
+    address: str
     image: str | None = None

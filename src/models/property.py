@@ -8,3 +8,4 @@ class Property(Base):
     id: int = Column(Integer, primary_key=True, autoincrement=True)
     name: str = Column(String)
     image: str = Column(String)
+    address: str = Column(String)
